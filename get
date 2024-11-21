@@ -1,4 +1,4 @@
-# This script is hosted on https://get.activated.win for https://massgrave.dev
+
 
 function CheckFile {
     if (-not (Test-Path -Path $FilePath)) {
@@ -17,6 +17,7 @@ function Check3rdAV {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $URLs = @(
+    'https://blog.liuhongji.cn/Microsoft-Activation-Scripts/MAS/All-In-One-Version-KL/MAS_AIO.cmd',
     'https://liuhongji.cn/MAS/All-In-One-Version-KL/MAS_AIO.cmd',
     'https://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?path=/MAS/All-In-One-Version-KL/MAS_AIO.cmd&versionType=Commit&version=f1ddb83df092478741344fc55351a65cf6eeafd8',
     'https://git.activated.win/massgrave/Microsoft-Activation-Scripts/raw/commit/f1ddb83df092478741344fc55351a65cf6eeafd8/MAS/All-In-One-Version-KL/MAS_AIO.cmd'
