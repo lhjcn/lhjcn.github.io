@@ -32,7 +32,7 @@ if (-not $response) {
 }
 
 # Verify script integrity
-$releaseHash = '2A0A5F9675BA93D11DF5EB531810F8097D1C13CE3A723FC2235A85127E86E172'
+$releaseHash = '49CE81C583C69AC739890D2DFBB908BDD67B862702DAAEBCD2D38F1DDCEE863D'
 $stream = New-Object IO.MemoryStream
 $writer = New-Object IO.StreamWriter $stream
 $writer.Write($response)

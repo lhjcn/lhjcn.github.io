@@ -1,4 +1,4 @@
-@set masver=2.8
+@set masver=2.9
 @echo off
 
 
@@ -134,7 +134,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -233,9 +233,9 @@ goto dk_done
 
 ::  Check PowerShell
 
-REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
 
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
 %eline%
 cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
 echo:
@@ -1328,7 +1328,6 @@ rmdir /s /q "%ProgramData%\Microsoft\Office\Licenses\" %nul%
 for %%x in (15 16) do (
 for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Licensing /f %nul%
-reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Identity /f %nul%
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
 rmdir /s /q "%%b\AppData\Local\Microsoft\Office\Licenses\" %nul%
@@ -1351,7 +1350,6 @@ if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\Syst
 set defname=DEFTEMP-%%#
 reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
 reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
-reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
 reg unload HKU\!defname! %nul%
 )
 )
@@ -2808,6 +2806,11 @@ set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+set showfix=1
+)
+echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
+set fixes=%fixes% %mas%fix_service
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )

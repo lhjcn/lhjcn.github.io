@@ -1,4 +1,4 @@
-@set masver=2.8
+@set masver=2.9
 @echo off
 
 
@@ -109,7 +109,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -211,9 +211,9 @@ goto dk_done
 
 ::  Check PowerShell
 
-REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
 
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
 %eline%
 cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
 echo:
@@ -663,29 +663,42 @@ call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWindowsUpdateAccess %nul2% | find /i "0x1" %nul% && set wublock=1
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
-if defined wublock call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+if defined wublock (
+call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+)
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v DisableStoreApps %nul2% | find /i "0x1" %nul% && (
 set storeblock=1
 call :dk_color %Red% "Checking Store Blocker In Registry      [Found]"
+call :dk_color %Blue% "If you have used any tool to block Store, undo it."
 )
 
-for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do if not defined wucorrupt (
-reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv /v %%G %nul% || set wucorrupt=1
+set wcount=0
+for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do (
+reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv /v %%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
-for %%G in (Parameters Security TriggerInfo) do if not defined wucorrupt (
-reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || set wucorrupt=1
+for %%G in (Parameters Security) do (
+reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
 if defined wucorrupt (
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
+if !wcount! GTR 2 (
+call :dk_color %Red% "Windows seems to be infected with Mal%w%ware."
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+) else (
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+)
 ) else (
 %psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
 sc query wuauserv | find /i "RUNNING" %nul% || (
 set wuerror=1
 sc start wuauserv %nul%
 call :dk_color %Red% "Starting Windows Update Service         [Failed] [!errorlevel!]"
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
 )
 )
 
@@ -1211,6 +1224,11 @@ set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+set showfix=1
+)
+echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
+set fixes=%fixes% %mas%fix_service
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )

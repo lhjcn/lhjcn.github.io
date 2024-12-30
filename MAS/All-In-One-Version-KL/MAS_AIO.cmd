@@ -1,5 +1,5 @@
 @::b879-random
-@set masver=2.8
+@set masver=2.9
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -76,7 +76,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -172,9 +172,9 @@ goto dk_done
 
 ::  Check PowerShell
 
-REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
 
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
 %eline%
 cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
 echo:
@@ -900,29 +900,42 @@ call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWindowsUpdateAccess %nul2% | find /i "0x1" %nul% && set wublock=1
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
-if defined wublock call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+if defined wublock (
+call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+)
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v DisableStoreApps %nul2% | find /i "0x1" %nul% && (
 set storeblock=1
 call :dk_color %Red% "Checking Store Blocker In Registry      [Found]"
+call :dk_color %Blue% "If you have used any tool to block Store, undo it."
 )
 
-for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do if not defined wucorrupt (
-reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv /v %%G %nul% || set wucorrupt=1
+set wcount=0
+for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do (
+reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv /v %%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
-for %%G in (Parameters Security TriggerInfo) do if not defined wucorrupt (
-reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || set wucorrupt=1
+for %%G in (Parameters Security) do (
+reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
 if defined wucorrupt (
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
+if !wcount! GTR 2 (
+call :dk_color %Red% "Windows seems to be infected with Mal%w%ware."
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+) else (
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+)
 ) else (
 %psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
 sc query wuauserv | find /i "RUNNING" %nul% || (
 set wuerror=1
 sc start wuauserv %nul%
 call :dk_color %Red% "Starting Windows Update Service         [Failed] [!errorlevel!]"
+call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
 )
 )
 
@@ -1464,6 +1477,11 @@ set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+set showfix=1
+)
+echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
+set fixes=%fixes% %mas%fix_service
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )
@@ -2909,7 +2927,6 @@ rmdir /s /q "%ProgramData%\Microsoft\Office\Licenses\" %nul%
 for %%x in (15 16) do (
 for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Licensing /f %nul%
-reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Identity /f %nul%
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
 rmdir /s /q "%%b\AppData\Local\Microsoft\Office\Licenses\" %nul%
@@ -2932,7 +2949,6 @@ if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\Syst
 set defname=DEFTEMP-%%#
 reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
 reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
-reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
 reg unload HKU\!defname! %nul%
 )
 )
@@ -3143,15 +3159,15 @@ for %%# in (
 15_9cedef15-be37-4ff0-a08a-13a045540641_RPHPB-Y7NC4-3VYFM-DW7VD-G8%f%YJ8_MAK___________WordVolume
 :: Office 365 - 15.0 version
 15_742178ed-6b28-42dd-b3d7-b7c0ea78741b_Y9NF9-M2QWD-FF6RJ-QJW36-RR%f%F2T_SubTest_______O365BusinessRetail
-15_537ea5b5-7d50-4876-bd38-a53a77caca32_J2W28-TN9C8-26PWV-F7J4G-72%f%XCB_Subscription1_O365HomePremRetail
+15_a96f8dae-da54-4fad-bdc6-108da592707a_3NMDC-G7C3W-68RGP-CB4MH-4C%f%XCH_SubTest1______O365HomePremRetail
 15_e3dacc06-3bc2-4e13-8e59-8e05f3232325_H8DN8-Y2YP3-CR9JT-DHDR9-C7%f%GP3_Subscription2_O365ProPlusRetail
-15_bacd4614-5bef-4a5e-bafc-de4c788037a2_HN8JP-87TQJ-PBF3P-Y66KC-W2%f%K9V_Subscription1_O365SmallBusPremRetail
+15_0bc1dae4-6158-4a1c-a893-807665b934b2_2QCNB-RMDKJ-GC8PB-7QGQV-7Q%f%TQJ_Subscription2_O365SmallBusPremRetail
 :: Office 365 - 16.0 version
 16_742178ed-6b28-42dd-b3d7-b7c0ea78741b_Y9NF9-M2QWD-FF6RJ-QJW36-RR%f%F2T_SubTest_______O365BusinessRetail
 16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W62NQ-267QR-RTF74-PF2MH-JQ%f%MTH_Subscription__O365EduCloudRetail
-16_537ea5b5-7d50-4876-bd38-a53a77caca32_J2W28-TN9C8-26PWV-F7J4G-72%f%XCB_Subscription1_O365HomePremRetail
+16_a96f8dae-da54-4fad-bdc6-108da592707a_3NMDC-G7C3W-68RGP-CB4MH-4C%f%XCH_SubTest1______O365HomePremRetail
 16_e3dacc06-3bc2-4e13-8e59-8e05f3232325_H8DN8-Y2YP3-CR9JT-DHDR9-C7%f%GP3_Subscription2_O365ProPlusRetail
-16_bacd4614-5bef-4a5e-bafc-de4c788037a2_HN8JP-87TQJ-PBF3P-Y66KC-W2%f%K9V_Subscription1_O365SmallBusPremRetail
+16_0bc1dae4-6158-4a1c-a893-807665b934b2_2QCNB-RMDKJ-GC8PB-7QGQV-7Q%f%TQJ_Subscription2_O365SmallBusPremRetail
 :: Office 2016
 16_bfa358b0-98f1-4125-842e-585fa13032e6_WHK4N-YQGHB-XWXCC-G3HYC-6J%f%F94_Retail________AccessRetail
 16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_RNB7V-P48F4-3FYY6-2P3R3-63%f%BQV_PrepidBypass__AccessRuntimeRetail
@@ -8648,12 +8664,12 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 
 ::========================================================================================================================================
 
-::  Check Activation ID
+::  Check Activation IDs
 
-call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
-if not defined apps (
+call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+if not defined allapps (
 %eline%
-echo Either key is not insalled or script failed to get installed key's activation ID. Aborting...
+echo Failed to find activation IDs. Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"

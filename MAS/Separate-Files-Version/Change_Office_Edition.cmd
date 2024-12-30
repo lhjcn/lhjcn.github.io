@@ -1,4 +1,4 @@
-@set masver=2.8
+@set masver=2.9
 @echo off
 
 
@@ -69,7 +69,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -164,9 +164,9 @@ goto dk_done
 
 ::  Check PowerShell
 
-REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
 
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
 %eline%
 cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
 echo:
