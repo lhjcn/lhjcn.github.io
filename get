@@ -8,7 +8,7 @@ function Check3rdAV {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $URLs = @(
-       'https://blog.liuhongji.cn/Microsoft-Activation-Scripts/MAS/All-In-One-Version-KL/MAS_AIO.cmd',
+       'https://blog.liuhongji.cn/MAS/All-In-One-Version-KL/MAS_AIO.cmd',
     'https://liuhongji.cn/MAS/All-In-One-Version-KL/MAS_AIO.cmd'
 )
 
