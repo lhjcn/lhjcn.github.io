@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台式小风扇</title>
+  <style>body{background:linear-gradient(135deg,#e0e7ff 0%,#f0fdfa 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Segoe UI','PingFang SC',Arial,sans-serif;}.fan-container{background:#fff;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.12);padding:10px 32px 32px 32px;display:flex;flex-direction:column;align-items:center;transition:box-shadow 0.3s;}.fan-svg{width:220px;height:300px;display:block;margin-bottom:32px;}.controls{display:flex;gap:16px;margin-top:12px;}.speed-btn{background:#e0e7ff;border:none;border-radius:50%;width:48px;height:48px;font-size:1.2rem;color:#374151;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:background 0.2s,color 0.2s,transform 0.2s;}.speed-btn.active{background:#6366f1;color:#fff;transform:scale(1.1);}.fan-label{margin-top:18px;font-size:1.1rem;color:#6366f1;letter-spacing:2px;font-weight:bold;}.fan-tip{margin-top:8px;font-size:0.95rem;color:#9ca3af;text-align:center;letter-spacing:1px;}</style>
+</head>
+<body>
+  <div class="fan-container">
+    <svg class="fan-svg" viewBox="0 0 260 300">
+      <defs>
+        <!-- 扇叶高光渐变、阴影、中心渐变、底座反光保留 -->
+        <linearGradient id="bladeLight" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.7"/>
+          <stop offset="60%" stop-color="#a5b4fc" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#6366f1" stop-opacity="0.9"/>
+        </linearGradient>
+        <filter id="bladeShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#6366f1" flood-opacity="0.18"/>
+        </filter>
+        <radialGradient id="centerGradient" cx="50%" cy="50%" r="80%">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="60%" stop-color="#818cf8"/>
+          <stop offset="100%" stop-color="#6366f1"/>
+        </radialGradient>
+        <radialGradient id="baseLight" cx="60%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#b4bcf7" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#6366f1"/>
+        </radialGradient>
+      </defs>
+      <!-- 风扇底座（下移） -->
+      <ellipse cx="130" cy="300" rx="80" ry="18" fill="url(#baseLight)"/>
+      <!-- 竖杆 -->
+      <rect x="122" y="170" width="16" height="134" rx="7" fill="#a5b4fc"/>
+      <!-- 风扇支架 -->
+      <rect x="120" y="160" width="20" height="30" rx="10" fill="#a5b4fc"/>
+      <!-- 风扇外框 -->
+      <circle cx="130" cy="130" r="100" fill="#f1f5f9" stroke="#6366f1" stroke-width="5"/>
+      <!-- 风扇面罩 -->
+      <g id="fan-mask">
+        <circle cx="130" cy="130" r="98" fill="none" stroke="#c7d2fe" stroke-width="2.2"/>
+        <circle cx="130" cy="130" r="80" fill="none" stroke="#c7d2fe" stroke-width="1.5"/>
+        <circle cx="130" cy="130" r="60" fill="none" stroke="#c7d2fe" stroke-width="1.2"/>
+        <circle cx="130" cy="130" r="40" fill="none" stroke="#c7d2fe" stroke-width="1"/>
+        <g>
+          <line x1="130" y1="30" x2="130" y2="230" stroke="#c7d2fe" stroke-width="1.5"/>
+          <line x1="30" y1="130" x2="230" y2="130" stroke="#c7d2fe" stroke-width="1.5"/>
+          <line x1="55" y1="55" x2="205" y2="205" stroke="#c7d2fe" stroke-width="1.2"/>
+          <line x1="205" y1="55" x2="55" y2="205" stroke="#c7d2fe" stroke-width="1.2"/>
+        </g>
+      </g>
+      <!-- 风扇扇叶组 -->
+      <g id="fan-blades" style="transform-origin: 130px 130px;">
+        <g filter="url(#bladeShadow)">
+          <path d="M130,130 L130,30 Q220,100 130,130 Z" fill="url(#bladeLight)"/>
+        </g>
+        <g filter="url(#bladeShadow)" transform="rotate(120 130 130)">
+          <path d="M130,130 L130,30 Q220,100 130,130 Z" fill="url(#bladeLight)"/>
+        </g>
+        <g filter="url(#bladeShadow)" transform="rotate(240 130 130)">
+          <path d="M130,130 L130,30 Q220,100 130,130 Z" fill="url(#bladeLight)"/>
+        </g>
+      </g>
+      <!-- 风扇中心 -->
+      <circle cx="130" cy="130" r="26" fill="url(#centerGradient)" stroke="#818cf8" stroke-width="4"/>
+      <circle cx="130" cy="130" r="10" fill="#fff" fill-opacity="0.7"/>
+    </svg>
+    <div class="controls">
+      <button class="speed-btn" data-speed="0">关</button>
+      <button class="speed-btn" data-speed="1">1档</button>
+      <button class="speed-btn" data-speed="2">2档</button>
+      <button class="speed-btn" data-speed="3">3档</button>
+    </div>
+    <div class="fan-label">台式小风扇</div>
+    <div class="fan-tip">除了没有风，什么都好！</div>
+  </div>
+  <script>
+    const blades = document.getElementById('fan-blades');
+    const btns = document.querySelectorAll('.speed-btn');
+    let speed = 1;
+    let angle = 0;
+    let animationId;
+    const speeds = {
+      0: 0, // 0档 关机
+      1: 4, // 1档 慢
+      2: 11, // 2档 中
+      3: 23  // 3档 快
+    };
+    function setActiveBtn(s) {
+      btns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.speed == s);
+      });
+    }
+    function animateFan() {
+      if (speeds[speed] === 0) return;
+      angle = (angle + speeds[speed]) % 360;
+      blades.style.transform = `rotate(${angle}deg)`;
+      animationId = requestAnimationFrame(animateFan);
+    }
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        speed = btn.dataset.speed;
+        setActiveBtn(speed);
+        cancelAnimationFrame(animationId);
+        if (speeds[speed] !== 0) animateFan();
+      });
+    });
+    // 默认启动1档
+    setActiveBtn(speed);
+    animateFan();
+    // 监听速度变化
+    let lastSpeed = speed;
+    setInterval(() => {
+      if (speed != lastSpeed) {
+        lastSpeed = speed;
+      }
+    }, 100);
+  </script>
+</body>
+</html>

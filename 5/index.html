@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>二维码时钟</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: linear-gradient(120deg, #232526 0%, #414345 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+        }
+        .container {
+            background: rgba(30, 30, 30, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.18);
+            padding: 36px 32px 28px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 320px;
+            border: 2px solid #FFD700;
+        }
+        h2 {
+            margin-bottom: 18px;
+            color: #B8860B; /* 深金色 */
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px #000, 0 0 2px #B8860B;
+        }
+
+        #qrcode {
+            margin: 18px 0 8px 0;
+            background: #181818;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(184, 134, 11, 0.12);
+            border: 1.5px solid #B8860B;
+            height: 206px;
+            box-sizing: border-box;
+        }
+        .tip {
+            color: #B8860B;
+            font-size: 15px;
+            margin-top: 10px;
+            min-height: 20px;
+            text-align: center;
+            text-shadow: 0 1px 2px #000;
+        }
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            background: #232526;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #B8860B;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="./qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>二维码时钟</h2>
+        <div id="qrcode"></div>
+        <div class="tip">请用手机扫码二维码，获取此刻的系统时间！<br>二维码内容每秒自动更新，时间永不落后！</div>
+    </div>
+    <script>
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function formatTime(date) {
+            return date.getFullYear() + '-' +
+                pad(date.getMonth() + 1) + '-' +
+                pad(date.getDate()) + ' ' +
+                pad(date.getHours()) + ':' +
+                pad(date.getMinutes()) + ':' +
+                pad(date.getSeconds());
+        }
+        const qrDiv = document.getElementById('qrcode');
+        let qr = null;
+        function update() {
+            const now = new Date();
+            const timeStr = formatTime(now);
+            qrDiv.innerHTML = '';
+            qr = new QRCode(qrDiv, {
+                text: timeStr,
+                width: 180,
+                height: 180,
+                colorDark: "#B8860B", // 深金色
+                colorLight: "#181818", // 深黑色背景
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+        update();
+        setInterval(update, 1000);
+    </script>
+</body>
+</html>

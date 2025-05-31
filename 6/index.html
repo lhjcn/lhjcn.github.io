@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ECharts 时钟仪表盘</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100vw;
+            background-color: transparent;
+        }
+
+        .container {
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 0;
+            min-height: 0;
+            width: 100vw;
+            height: 100vh;
+            
+        }
+
+        #main {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: 100vw;
+            max-height: 100vh;
+            -webkit-app-region: drag;
+        }
+    </style>
+    <script src="./echarts.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div id="main"></div>
+    </div>
+    <script>
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        // 获取当前时间
+        function getTimeValues() {
+            var date = new Date();
+            var second = date.getSeconds();
+            var minute = date.getMinutes() + second / 60;
+            var hour = (date.getHours() % 12) + minute / 60;
+            return { hour, minute, second };
+        }
+        let now = getTimeValues();
+        let option = {
+            graphic: [
+                {
+                    type: 'text',
+                    left: 'center',
+                    top: '35%', // 向上移动
+                    style: {
+                        text: '',
+                        font: 'bold 16px fangsong, Microsoft YaHei, Arial',
+                        fill: '#C0911F',
+                        textAlign: 'center',
+                        textVerticalAlign: 'middle',
+                        shadowColor: 'rgba(0,0,0,0.2)',
+                        shadowBlur: 4
+                    }
+                }
+            ],
+            series: [
+                {
+                    name: 'hour',
+                    type: 'gauge',
+                    radius: '100%', // 让仪表盘最大化
+                    center: ['50%', '50%'], // 居中
+                    startAngle: 90,
+                    endAngle: -270,
+                    min: 0,
+                    max: 12,
+                    splitNumber: 12,
+                    clockwise: true,
+                    axisLine: {
+                        lineStyle: {
+                            width: 15,
+                            color: [[1, 'rgba(0,0,0,0.7)']],
+                            shadowColor: 'rgba(0, 0, 0, 0.5)',
+                            shadowBlur: 15
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            shadowColor: 'rgba(0, 0, 0, 0.3)',
+                            shadowBlur: 3,
+                            shadowOffsetX: 1,
+                            shadowOffsetY: 2
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 50,
+                        distance: 25,
+                        formatter: function (value) {
+                            if (value === 0) {
+                                return '';
+                            }
+                            return value + '';
+                        }
+                    },
+                    anchor: {
+                        show: false
+                    },
+                    pointer: {
+                        icon: 'path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z',
+                        width: 12,
+                        length: '55%',
+                        offsetCenter: [0, '8%'],
+                        itemStyle: {
+                            color: '#C0911F',
+                            shadowColor: 'rgba(0, 0, 0, 0.3)',
+                            shadowBlur: 8,
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 4
+                        }
+                    },
+                    detail: {
+                        show: false
+                    },
+                    title: {
+                        offsetCenter: [0, '30%']
+                    },
+                    data: [
+                        {
+                            value: now.hour
+                        }
+                    ]
+                },
+                {
+                    name: 'minute',
+                    type: 'gauge',
+                    radius: '98%',
+                    center: ['50%', '50%'],
+                    startAngle: 90,
+                    endAngle: -270,
+                    min: 0,
+                    max: 60,
+                    clockwise: true,
+                    axisLine: {
+                        show: false
+                    },
+                    splitLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    axisLabel: {
+                        show: false
+                    },
+                    pointer: {
+                        icon: 'path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z',
+                        width: 8,
+                        length: '70%',
+                        offsetCenter: [0, '8%'],
+                        itemStyle: {
+                            color: '#C0911F',
+                            shadowColor: 'rgba(0, 0, 0, 0.3)',
+                            shadowBlur: 8,
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 4
+                        }
+                    },
+                    detail: {
+                        show: false
+                    },
+                    title: {
+                        offsetCenter: ['0%', '-40%']
+                    },
+                    data: [
+                        {
+                            value: now.minute
+                        }
+                    ]
+                },
+                {
+                    name: 'second',
+                    type: 'gauge',
+                    radius: '98%',
+                    center: ['50%', '50%'],
+                    startAngle: 90,
+                    endAngle: -270,
+                    min: 0,
+                    max: 60,
+                    animationEasingUpdate: 'bounceOut',
+                    clockwise: true,
+                    axisLine: {
+                        show: false
+                    },
+                    splitLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    axisLabel: {
+                        show: false
+                    },
+                    pointer: {
+                        icon: 'path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z',
+                        width: 4,
+                        length: '85%',
+                        offsetCenter: [0, '8%'],
+                        itemStyle: {
+                            color: '#C0911F',
+                            shadowColor: 'rgba(0, 0, 0, 0.3)',
+                            shadowBlur: 8,
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 4
+                        }
+                    },
+                    detail: {
+                        show: false
+                    },
+                    title: {
+                        offsetCenter: ['0%', '-40%']
+                    },
+                    data: [
+                        {
+                            value: now.second
+                        }
+                    ]
+                }
+            ]
+        };
+      
+        let intervalFunc = () => {
+            var date = new Date();
+            var second = date.getSeconds();
+            var minute = date.getMinutes() + second / 60;
+            var hour = (date.getHours() % 12) + minute / 60;
+            option.animationDurationUpdate = 300;
+            myChart.setOption({
+                series: [
+                    {
+                        name: 'hour',
+                        animation: hour !== 0,
+                        data: [{ value: hour }]
+                    },
+                    {
+                        name: 'minute',
+                        animation: minute !== 0,
+                        data: [{ value: minute }]
+                    },
+                    {
+                        animation: second !== 0,
+                        name: 'second',
+                        data: [{ value: second }]
+                    }
+                ]
+            });
+        }
+        myChart.setOption(option);
+        intervalFunc();
+        setInterval(function () {
+            intervalFunc();
+        }, 1000);
+        // 监听窗口大小变化，自适应图表
+        function updateTextFontSize() {
+            option.series[0].axisLabel.fontSize = (chartDom.offsetWidth < 400 ? 20 : 50);
+            myChart.setOption(option);
+            intervalFunc();
+
+        }
+
+        window.addEventListener('resize', function () {
+            myChart.resize();
+            updateTextFontSize();
+        });
+        // 页面初始化时也执行一次
+        updateTextFontSize();
+        // 双击时钟退出应用程序
+        document.querySelector('.container').ondblclick = function () {
+            // 兼容 Electron
+            if (window.electronAPI && window.electronAPI.closeWindow) {
+                window.electronAPI.closeWindow();
+            }
+        }
+    </script>
+</body>
+
+</html>
