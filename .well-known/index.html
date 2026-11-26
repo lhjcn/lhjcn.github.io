@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>VOI 离线 admin 动态口令生成器 v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI','Microsoft YaHei',sans-serif}
+body{background:linear-gradient(135deg,#466fd0 0,#6a4fd0 55,#8a4fc8 100%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:30px 16px 46px;color:#26364b}
+.wrap{width:100%;max-width:680px}
+.card{background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(20,25,70,.24);padding:30px 32px 28px;margin-bottom:16px}
+.card.tight{padding:22px 26px}
+h1{font-size:21px;color:#20304a;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1 svg{flex:none}
+.badge{display:inline-block;background:#e9eeff;color:#3b5fc0;border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700;letter-spacing:.5px}
+.badge.green{background:#e6f7ef;color:#1d8a5a}
+.sub{color:#8190a6;font-size:13px;margin-top:9px;line-height:1.75}
+.hero{margin:22px 0 14px;background:linear-gradient(135deg,#f3f7ff,#eaeefe);border:2px solid #d2ddff;border-radius:16px;padding:22px 18px 20px;text-align:center}
+.hero-label{font-size:12px;color:#7a88a0;letter-spacing:1.5px}
+.hero-code{font-size:58px;font-weight:800;letter-spacing:8px;color:#2b4bb8;margin:8px 0 4px;font-variant-numeric:tabular-nums;text-indent:8px;line-height:1.15}
+.hero-code .lead{color:#e0574a}
+.hero-meta{font-size:13px;color:#7a88a0}
+.hero-meta b{color:#3b5fc0}
+.creds{display:flex;gap:10px;margin-bottom:18px}
+.cred{flex:1;background:#f7f9fd;border:1px solid #e6ecf7;border-radius:11px;padding:11px 14px}
+.cred span{display:block;font-size:11px;color:#8a98ad;margin-bottom:5px}
+.cred b{font-size:17px;color:#2c3c58;letter-spacing:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=date],input[type=text],select{padding:10px 12px;border:2px solid #e0e7f3;border-radius:9px;font-size:14px;color:#33445e;background:#fff;outline:none}
+input[type=date]{flex:1;min-width:150px;cursor:pointer}
+input[type=text]{width:130px;letter-spacing:3px;font-variant-numeric:tabular-nums;font-weight:700}
+select{cursor:pointer}
+input:focus,select:focus{border-color:#5a7fe0}
+button{border:0;border-radius:9px;padding:10px 14px;font-size:13px;cursor:pointer;background:#ecf1fb;color:#3a4c6b;transition:.15s;white-space:nowrap}
+button:hover{filter:brightness(.95);transform:translateY(-1px)}
+button:active{transform:none}
+button.pri{background:#3b62d6;color:#fff}
+button.ghost{background:transparent;border:1px solid #dbe3f2}
+.mini{padding:9px 12px}
+.divider{height:1px;background:#eef2f9;margin:18px 0}
+.lbl{font-size:12px;color:#8a98ad;margin-bottom:9px;display:block}
+.check{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#5d6c85}
+.check .res{font-weight:700}
+.check .ok{color:#1d8a5a}
+.check .no{color:#d34b3f}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #eef2f9}
+th{color:#8a98ad;font-weight:600;font-size:12px}
+td.c{font-weight:700;color:#2b4bb8;letter-spacing:2px;font-variant-numeric:tabular-nums}
+tr.today{background:#f0f5ff}
+tr.today td{color:#2b4bb8;font-weight:700}
+details{margin-top:16px;border-top:1px solid #eef2f9;padding-top:14px}
+summary{cursor:pointer;font-size:13px;color:#3b5fc0;outline:none;user-select:none}
+pre{background:#f6f8fc;border-radius:10px;padding:14px;overflow:auto;font-size:12px;line-height:1.75;color:#42506a;margin-top:12px}
+.note{font-size:12.5px;color:#5d6c85;line-height:1.95}
+.note b{color:#2c3c58}
+.note ul{padding-left:19px;margin-top:6px}
+.note li{margin:3px 0}
+code{background:#f1f4fa;padding:1px 5px;border-radius:4px;color:#2b4bb8;font-size:12px}
+.foot{text-align:center;color:#c9d4f5;font-size:12px;margin-top:18px;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#26364b;color:#fff;padding:11px 22px;border-radius:10px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:560px){.card{padding:22px 18px}.card.tight{padding:20px 18px}.hero-code{font-size:44px;letter-spacing:5px}.creds{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b62d6" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="#3b62d6" stroke="none"/></svg>
+      VOI 离线 admin 动态口令
+      <span class="badge">V2</span><span class="badge green">首位 1–9</span><span class="badge">单文件 · 离线</span>
+    </h1>
+    <div class="sub">按<strong>目标终端 RTC 的本地日期</strong>生成当日 6 位口令，全程本地计算、不联网、不上传任何数据。</div>
+
+    <div class="hero">
+      <div class="hero-label">当日动态口令 · V2</div>
+      <div class="hero-code" id="code">------</div>
+      <div class="hero-meta" id="codeDate">—</div>
+    </div>
+
+    <div class="creds">
+      <div class="cred"><span>账号（固定）</span><b>admin</b></div>
+      <div class="cred"><span>口令（6 位）</span><b id="code2">------</b></div>
+      <div class="cred"><span>首位 / 长度</span><b id="lead">—</b></div>
+    </div>
+
+    <div class="row">
+      <input type="date" id="dateInput" title="选择目标终端显示的日期">
+      <button class="pri mini" id="btnToday">今天</button>
+      <button class="mini" id="btnPrev">前一天</button>
+      <button class="mini" id="btnNext">后一天</button>
+      <button class="ghost mini" id="btnCopy">复制口令</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <span class="lbl">口令校验（把待核对的 6 位码填进来）</span>
+    <div class="check">
+      <input type="text" id="verifyInput" maxlength="6" inputmode="numeric" placeholder="6 位数字">
+      <span class="res" id="verifyRes">—</span>
+      <span style="color:#9aa7bb;font-size:12px">按当前选中日期核对，← → 可切换日期</span>
+    </div>
+
+    <details>
+      <summary>算法明细 / 中间值</summary>
+      <pre id="algo"></pre>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="note" style="margin-bottom:12px"><b>按日期批量生成与导出</b></div>
+    <div class="row">
+      <span class="lbl" style="margin:0">以选中日期为起点</span>
+      <select id="daysSel">
+        <option value="15">15 天</option>
+        <option value="30" selected>30 天</option>
+        <option value="90">90 天</option>
+        <option value="365">365 天</option>
+        <option value="1096">1096 天</option>
+      </select>
+      <button class="pri mini" id="btnCsv">导出 CSV</button>
+      <button class="ghost mini" id="btnTable">刷新下方表格</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <span class="lbl" style="margin:0">表格范围</span>
+      <select id="spanSel">
+        <option value="7">前后各 7 天</option>
+        <option value="15" selected>前后各 15 天</option>
+        <option value="30">前后各 30 天</option>
+      </select>
+    </div>
+    <table>
+      <thead><tr><th>日期</th><th>星期</th><th>V2 口令</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card tight">
+    <div class="note">
+      <b>算法 V2</b>
+      <ul>
+        <li><code>crc = CRC32("YYYY-MM-DD 00:00:00")</code>（标准 0xEDB88320 反射表）</li>
+        <li><code>raw = (((crc | 0xFFFFFFFF00000000) × 100 mod 2^64) ÷ 18) &amp; 0xFFFF</code></li>
+        <li><code>code = 100000 + raw × 13</code> → 100000–951955，<strong>恒 6 位、首位 1–9</strong>，与旧 v1 一一对应</li>
+      </ul>
+      <div style="margin-top:9px">
+        <b>使用要点</b>
+        <ul>
+          <li>账号 <code>admin</code>（大小写不敏感），口令必须恰好 6 个字符；日期选<strong>终端显示的日期</strong>，终端本地 0 点换码。</li>
+          <li><strong>离线模式需客户端 EFI 同步为 v2</strong>（见 <code>patched/OSManager_*_v2.efi</code>）；未刷写的终端请用 v1 旧生成器。在线模式只改服务端即可。</li>
+          <li>口令仅 6 位且只依赖公开日期，属可预测的应急维护凭据，不应作为长期访问控制。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">单文件 · 零依赖 · 无网络请求 · 可 file:// 双击运行<br>JS / Python / PHP 三实现已对 2026–2028 共 1096 天逐日比对，零差异</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* === ALGO_CORE_START === */
+function calculateCRC32(inputStr){
+  const crcTable = new Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    crcTable[i] = c >>> 0;
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < inputStr.length; i++) {
+    const byte = inputStr.charCodeAt(i) & 0xFF;
+    crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xFF];
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function rawFor(dateStr){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) throw new Error('日期格式必须为 YYYY-MM-DD');
+  const timeStr = dateStr + ' 00:00:00';
+  const crcVal = calculateCRC32(timeStr);
+  const bigVal = BigInt(crcVal) | 0xFFFFFFFF00000000n;
+  const prod = (bigVal * 100n) & 0xFFFFFFFFFFFFFFFFn;
+  const q = prod / 18n;
+  return {timeStr, crcVal, bigVal, prod, q, raw: Number(q & 0xFFFFn)};
+}
+function generateV2(dateStr){
+  return String(100000 + rawFor(dateStr).raw * 13);
+}
+/* === ALGO_CORE_END === */
+
+function iso(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parse(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function addDays(s,n){ const d = parse(s); d.setDate(d.getDate()+n); return iso(d); }
+const WK = ['日','一','二','三','四','五','六'];
+let cur = iso(new Date());
+
+function $(id){ return document.getElementById(id); }
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 1700);
+}
+function checkVerify(){
+  const v = $('verifyInput').value.trim();
+  const el = $('verifyRes');
+  if (!v) { el.textContent = '—'; el.className = 'res'; return; }
+  const ok = v === generateV2(cur);
+  el.textContent = ok ? '✓ 与该日期的 V2 口令一致' : '✗ 不匹配（应为 ' + generateV2(cur) + '）';
+  el.className = 'res ' + (ok ? 'ok' : 'no');
+}
+function render(){
+  const d = rawFor(cur);
+  const code = generateV2(cur);
+  $('code').innerHTML = '<span class="lead">' + code[0] + '</span>' + code.slice(1);
+  $('code2').textContent = code;
+  $('lead').textContent = code[0] + ' / 6 位';
+  $('codeDate').textContent = cur + '  星期' + WK[parse(cur).getDay()];
+  $('dateInput').value = cur;
+
+  $('algo').textContent =
+    'date        = ' + cur + '\n' +
+    'timeStr     = "' + d.timeStr + '"\n' +
+    'crc32       = 0x' + d.crcVal.toString(16).toUpperCase().padStart(8,'0') + '\n' +
+    'bigVal      = 0x' + d.bigVal.toString(16).toUpperCase() + '   // crc | 0xFFFFFFFF00000000\n' +
+    'bigVal*100  = 0x' + d.prod.toString(16).toUpperCase() + '   (mod 2^64)\n' +
+    'div 18      = 0x' + d.q.toString(16).toUpperCase() + '\n' +
+    'raw         = ' + d.raw + '   // 商低 16 位\n' +
+    'v2          = 100000 + ' + d.raw + ' * 13 = ' + code + '\n' +
+    'v1 (旧)     = ' + String(d.raw).padStart(6,'0') + '   // 仅对照，本生成器不输出';
+
+  const span = parseInt($('spanSel').value, 10) || 15;
+  const today = iso(new Date());
+  let html = '';
+  for (let i = -span; i <= span; i++){
+    const ds = addDays(cur, i);
+    html += '<tr' + (ds===today?' class="today"':'') + '><td>' + ds + '</td><td>周' + WK[parse(ds).getDay()] + '</td>' +
+            '<td class="c">' + generateV2(ds) + '</td><td>' + (ds===today?'今天':'') + '</td></tr>';
+  }
+  $('tbody').innerHTML = html;
+  checkVerify();
+}
+function setDate(s){ cur = s; render(); }
+
+$('dateInput').addEventListener('change', e => { if(e.target.value) setDate(e.target.value); });
+$('spanSel').addEventListener('change', render);
+$('verifyInput').addEventListener('input', checkVerify);
+$('btnToday').onclick = () => setDate(iso(new Date()));
+$('btnPrev').onclick = () => setDate(addDays(cur,-1));
+$('btnNext').onclick = () => setDate(addDays(cur,1));
+$('btnTable').onclick = () => { render(); toast('表格已刷新'); };
+$('btnCopy').onclick = () => {
+  const v = generateV2(cur);
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(v).then(()=>toast('已复制 ' + v));
+  else { const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('已复制 ' + v); }
+};
+$('btnCsv').onclick = () => {
+  const n = parseInt($('daysSel').value, 10) || 30;
+  let s = '\ufeffdate,username,code,algo\n';
+  for (let i=0; i<n; i++){
+    const ds = addDays(cur, i);
+    s += ds + ',admin,' + generateV2(ds) + ',v2\n';
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([s],{type:'text/csv;charset=utf-8'}));
+  a.download = 'voi_admin_v2_' + cur + '_' + n + 'd.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  toast('已导出 ' + n + ' 天 V2 口令表');
+};
+document.addEventListener('keydown', e => {
+  if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowLeft') setDate(addDays(cur,-1));
+  if (e.key === 'ArrowRight') setDate(addDays(cur,1));
+});
+render();
+</script>
+</body>
+</html>
